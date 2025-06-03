@@ -46,10 +46,11 @@ void s_set(SHADER* this, char* vertexPath, char* fragPath) {
 
   int success;
   char infolog[512];
+  //vertex shader
   glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
   if (!success) {
       glGetShaderInfoLog(vertexShader, 512, NULL, infolog);
-      printf("Shader vertex compilation failed.\n%s\n", infolog);
+      printf("Vertex shader vertex compilation failed.\n%s\n", infolog);
   }
   //fragment shader
   fragShader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -58,9 +59,9 @@ void s_set(SHADER* this, char* vertexPath, char* fragPath) {
   glGetShaderiv(fragShader, GL_COMPILE_STATUS, &success);
   if (!success) {
       glGetShaderInfoLog(fragShader, 512, NULL, infolog);
-      printf("Shader fragment compilation failed.\n%s\n", infolog);
+      printf("Fragment shader fragment compilation failed.\n%s\n", infolog);
   }
-    //linking to shader program
+  //linking to shader program
   *this = glCreateProgram();
   glAttachShader(*this, vertexShader);
   glAttachShader(*this, fragShader);

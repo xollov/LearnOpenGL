@@ -1,6 +1,6 @@
 
 CC = gcc
-FLAGS = -Wall
+FLAGS = -Wall -std=c11
 SRCS = main.c glad.c Graphics/shader.c
 LIBS = -lglfw -lGL -lm
 TARGET = w

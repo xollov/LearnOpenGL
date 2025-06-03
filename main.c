@@ -61,39 +61,39 @@ int main() {
   float vertices [] = {
     // pos               //tex         //color
     // front
-    -.5f, -.5f, .5f,
-    -.5f,  .5f, .5f,
-     .5f, -.5f, .5f,
-     .5f,  .5f, .5f,
+    -.5f, -.5f, .5f, 0, 0, 1, 
+    -.5f,  .5f, .5f, 0, 0, 1,
+     .5f, -.5f, .5f, 0, 0, 1,
+     .5f,  .5f, .5f, 0, 0, 1,
 
     // top
-    -.5f, .5f,  0.5f,
-    -.5f, .5f, -0.5f,
-     .5f, .5f,  0.5f,
-     .5f, .5f, -0.5f,
+    -.5f, .5f,  .5f, 0, 1, 0,
+    -.5f, .5f, -.5f, 0, 1, 0, 
+     .5f, .5f,  .5f, 0, 1, 0, 
+     .5f, .5f, -.5f, 0, 1, 0, 
 
     // right
-     .5f, -.5f,  .5f,
-     .5f,  .5f,  .5f,
-     .5f, -.5f, -.5f,
-     .5f,  .5f, -.5f,
+     .5f, -.5f,  .5f, 1, 0, 0,
+     .5f,  .5f,  .5f, 1, 0, 0,
+     .5f, -.5f, -.5f, 1, 0, 0,
+     .5f,  .5f, -.5f, 1, 0, 0,
 
     // left
-     -.5f, -.5f,  .5f,
-     -.5f,  .5f,  .5f,
-     -.5f, -.5f, -.5f,
-     -.5f,  .5f, -.5f,
+     -.5f, -.5f,  .5f, -1, 0, 0,
+     -.5f,  .5f,  .5f, -1, 0, 0,
+     -.5f, -.5f, -.5f, -1, 0, 0,
+     -.5f,  .5f, -.5f, -1, 0, 0,
 
     // bottom
-     -.5f, -.5f,  .5f,
-     -.5f, -.5f, -.5f,
-      .5f, -.5f,  .5f,
-      .5f, -.5f, -.5f,
+     -.5f, -.5f,  .5f, 0, -1, 0,
+     -.5f, -.5f, -.5f, 0, -1, 0,
+      .5f, -.5f,  .5f, 0, -1, 0,
+      .5f, -.5f, -.5f, 0, -1, 0,
     // back
-     -.5f, -.5f, -.5f,
-     -.5f,  .5f, -.5f,
-      .5f, -.5f, -.5f,
-      .5f,  .5f, -.5f,
+     -.5f, -.5f, -.5f, 0, 0, -1,
+     -.5f,  .5f, -.5f, 0, 0, -1,
+      .5f, -.5f, -.5f, 0, 0, -1,
+      .5f,  .5f, -.5f, 0, 0, -1,
   };
   unsigned int indices [] = {
     0,1,3,
@@ -129,7 +129,21 @@ int main() {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
   
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), 0);
+  glEnableVertexAttribArray(0);
+
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3*sizeof(float)));
+  glEnableVertexAttribArray(1);
+  
+  // light cube vao
+  // NOTE(xollow): for every VAO you use you NEED to bind some VBO and EBO(opt.)
+  // if you bind alredy existinh VBO and EBO you dont need to call glBufferData for either of them.
+  unsigned int lightVAO;
+  glGenVertexArrays(1, &lightVAO);
+  glBindVertexArray(lightVAO);
+  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), 0);
   glEnableVertexAttribArray(0);
 
   //SHADERS END
@@ -162,7 +176,7 @@ int main() {
     timer += deltaTime;
     procesInput(window);
 
-    glClearColor(0, 0, 0, 0);
+    glClearColor(0.3, 0.1, 0.6, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     // ----------------------------------------------------
     
@@ -174,7 +188,7 @@ int main() {
     mat4 view  = GLM_MAT4_IDENTITY_INIT;
     
     vec3 front;
-    glm_vec3_add(cameraPos,cameraFront, front);
+    glm_vec3_add(cameraPos, cameraFront, front);
     
     /*
     if (timer > 2) {
@@ -194,13 +208,14 @@ int main() {
     mat4 model = GLM_MAT4_IDENTITY_INIT;  
     glm_translate(model,cubePositions[0]);
     s_setVec3f(shader, "objColor", 1, 0.5, 0.31);
-    s_setVec3f(shader, "lightColor", 0.3,0.1,0.4);
+    s_setVec3f(shader, "lightColor", 1, 1, 1);
     s_setMatrix4fv(shader, "model", 1, GL_FALSE, model[0]);
+    s_setVec3f(shader, "lightPos", cubePositions[1][0], cubePositions[1][1],cubePositions[1][2]);
+    s_setVec3f(shader, "viewPos", cameraPos[0], cameraPos[1], cameraPos[2]);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
 
     glUseProgram(lightShader);
-    glBindVertexArray(VAO);
     glm_mat4_ucopy(GLM_MAT4_IDENTITY, model);  
     glm_translate(model,cubePositions[1]);
     s_setMatrix4fv(shader, "model", 1, GL_FALSE, model[0]);
@@ -208,13 +223,13 @@ int main() {
     s_setMatrix4fv(shader, "projection", 1, GL_FALSE, projection[0]);
    /*
     */
+    glBindVertexArray(lightVAO);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
     // Dont touch yet
     glfwSwapBuffers(window);
     glfwPollEvents();    
-  
-    }
+  }
 
   glDeleteVertexArrays(1, &VAO);
   glDeleteBuffers(1, &VBO);
