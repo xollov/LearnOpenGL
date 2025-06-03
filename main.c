@@ -158,7 +158,7 @@ int main() {
 
   vec3 cubePositions[] = {
   {0,  0,  0},
-  {1,  2,  -1},
+  {0,  0,  0},
   };
 
 
@@ -182,49 +182,46 @@ int main() {
     
     //float gamma = sin(glfwGetTime())/2 + 0.5f;
     // bind textures on corresponding texture units
-    glUseProgram(shader);
     
+    // setup
     mat4 projection = GLM_MAT4_IDENTITY_INIT;
     mat4 view  = GLM_MAT4_IDENTITY_INIT;
-    
+    mat4 model = GLM_MAT4_IDENTITY_INIT;  
+
     vec3 front;
     glm_vec3_add(cameraPos, cameraFront, front);
-    
-    /*
-    if (timer > 2) {
-      printf("CamerPos: {%f, %f, %f}  CameraFront{%f, %f, %f}\n",cameraPos[0], cameraPos[1], cameraPos[2],cameraFront[0], cameraFront[1], cameraFront[2]);
-      printf("front: {%f, %f, %f}\n", front[0], front[1], front[2]);
-      timer = 0;
-    }
-    */
     glm_lookat(cameraPos, front, cameraUp, view);
     glm_perspective(glm_rad(45), 1, 0.1f, 100.0f, projection);
-    
+
+    // light cube
+    glUseProgram(lightShader);
+    glm_translate(model,cubePositions[1]);
+    float radius = 1;
+    vec3 lightPos = {sin(glfwGetTime()) * radius, 0, cos(glfwGetTime()) * radius}; 
+    glm_translate(model, lightPos);
+    vec3 scale = {0.3, 0.3, 0.3};
+    glm_scale(model, scale); 
+    s_setMatrix4fv(shader, "model", 1, GL_FALSE, model[0]);
     s_setMatrix4fv(shader, "view", 1, GL_FALSE, view[0]);
     s_setMatrix4fv(shader, "projection", 1, GL_FALSE, projection[0]);
-
-
+    glBindVertexArray(lightVAO);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+    
+    // cube
+    glUseProgram(shader);
+    s_setMatrix4fv(shader, "view", 1, GL_FALSE, view[0]);
+    s_setMatrix4fv(shader, "projection", 1, GL_FALSE, projection[0]);
+    glm_mat4_ucopy(GLM_MAT4_IDENTITY, model);  
     glBindVertexArray(VAO);
-    mat4 model = GLM_MAT4_IDENTITY_INIT;  
     glm_translate(model,cubePositions[0]);
     s_setVec3f(shader, "objColor", 1, 0.5, 0.31);
     s_setVec3f(shader, "lightColor", 1, 1, 1);
     s_setMatrix4fv(shader, "model", 1, GL_FALSE, model[0]);
-    s_setVec3f(shader, "lightPos", cubePositions[1][0], cubePositions[1][1],cubePositions[1][2]);
+    s_setVec3f(shader, "lightPos", lightPos[0], lightPos[1], lightPos[2]);
     s_setVec3f(shader, "viewPos", cameraPos[0], cameraPos[1], cameraPos[2]);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
 
-    glUseProgram(lightShader);
-    glm_mat4_ucopy(GLM_MAT4_IDENTITY, model);  
-    glm_translate(model,cubePositions[1]);
-    s_setMatrix4fv(shader, "model", 1, GL_FALSE, model[0]);
-    s_setMatrix4fv(shader, "view", 1, GL_FALSE, view[0]);
-    s_setMatrix4fv(shader, "projection", 1, GL_FALSE, projection[0]);
-   /*
-    */
-    glBindVertexArray(lightVAO);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
     // Dont touch yet
     glfwSwapBuffers(window);
@@ -232,6 +229,7 @@ int main() {
   }
 
   glDeleteVertexArrays(1, &VAO);
+  glDeleteVertexArrays(1, &lightVAO);
   glDeleteBuffers(1, &VBO);
   glDeleteBuffers(1, &EBO);
   glDeleteProgram(shader);
@@ -253,8 +251,7 @@ void keycallback(GLFWwindow* window, int key, int scancode, int action, int mods
   }   
 
   if(key == GLFW_KEY_TAB && action == GLFW_PRESS) {
-    
-  glfwSetInputMode(window, GLFW_CURSOR, (cursor = !cursor) ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window, GLFW_CURSOR, (cursor = !cursor) ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
   }
 }
 
@@ -266,16 +263,11 @@ void procesInput(GLFWwindow* window) {
   if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
     vec3 temp;
     glm_vec3_copy(cameraFront, temp);
-    // glm_vec3_normalize(temp);
-    // printf("CameraFront: {%f,%f,%f};  Normalized: {%f,%f,%f}\n", cameraFront[0],cameraFront[1],cameraFront[2], temp[0],temp[1],temp[2]);
-    // cameraPos[2] -= cameraSpeed * deltaTime;
     glm_vec3_scale(temp, cameraSpeed * deltaTime, temp);
     glm_vec3_add(cameraPos, temp, cameraPos);
 
   }
   if (glfwGetKey(window,  GLFW_KEY_S) == GLFW_PRESS) {
-    //cameraPos[2] += cameraSpeed * deltaTime;
-
     vec3 temp;
     glm_vec3_copy(cameraFront, temp);
     glm_vec3_scale(temp, -1 * cameraSpeed * deltaTime, temp);
@@ -296,6 +288,18 @@ void procesInput(GLFWwindow* window) {
     glm_vec3_normalize(temp);
     glm_vec3_scale(temp, -cameraSpeed * deltaTime, temp);
     glm_vec3_add(cameraPos, temp, cameraPos);
+  }
+  // mode camera down 
+  if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+      vec3 temp;
+      glm_vec3_scale(cameraUp, -cameraSpeed * deltaTime, temp);
+      glm_vec3_add(cameraPos, temp, cameraPos);
+  }
+  // move camera up
+  if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+      vec3 temp;
+      glm_vec3_scale(cameraUp, cameraSpeed * deltaTime, temp);
+      glm_vec3_add(cameraPos, temp, cameraPos);
   }
 }
 void mousecallback(GLFWwindow* window, double xpos, double ypos) {
