@@ -12,5 +12,6 @@ void s_setInt(SHADER this, char* name, int value);
 void s_setFloat(SHADER this, char* name, float value);
 void s_setVec4f(SHADER this, char* name, float x, float y, float z, float w);
 void s_setVec3f(SHADER this, char* name, float x, float y, float z);
+void s_setVec3farr(SHADER this, char* name, float *arr);
 void s_setMatrix4fv(SHADER this, char* name, int count, int bool, float* value);
 #endif // SHADER_H

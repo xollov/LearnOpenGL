@@ -158,7 +158,7 @@ int main() {
 
   vec3 cubePositions[] = {
   {0,  0,  0},
-  {0,  0,  0},
+  {1,  0,  0.5},
   };
 
 
@@ -169,7 +169,7 @@ int main() {
 
   float timer = 0;
   while (!glfwWindowShouldClose(window)) {
-
+  
     float currentFrame = glfwGetTime();
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
@@ -193,17 +193,22 @@ int main() {
     glm_lookat(cameraPos, front, cameraUp, view);
     glm_perspective(glm_rad(45), 1, 0.1f, 100.0f, projection);
 
+    // set light source values
+    vec3 lightColor = {1,1,1};
+    vec3 diffuseColor = {1,1,1}, ambientColor = {1,1,1};
+    
     // light cube
     glUseProgram(lightShader);
     glm_translate(model,cubePositions[1]);
-    float radius = 1;
-    vec3 lightPos = {sin(glfwGetTime()) * radius, 0, cos(glfwGetTime()) * radius}; 
+    vec3 lightPos;
+    glm_vec3_copy(cubePositions[1], lightPos); 
     glm_translate(model, lightPos);
     vec3 scale = {0.3, 0.3, 0.3};
     glm_scale(model, scale); 
-    s_setMatrix4fv(shader, "model", 1, GL_FALSE, model[0]);
-    s_setMatrix4fv(shader, "view", 1, GL_FALSE, view[0]);
-    s_setMatrix4fv(shader, "projection", 1, GL_FALSE, projection[0]);
+    s_setMatrix4fv(lightShader, "model", 1, GL_FALSE, model[0]);
+    s_setMatrix4fv(lightShader, "view", 1, GL_FALSE, view[0]);
+    s_setMatrix4fv(lightShader, "projection", 1, GL_FALSE, projection[0]);
+    s_setVec3farr(lightShader,  "lightColor", lightColor);
     glBindVertexArray(lightVAO);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
     
@@ -214,14 +219,18 @@ int main() {
     glm_mat4_ucopy(GLM_MAT4_IDENTITY, model);  
     glBindVertexArray(VAO);
     glm_translate(model,cubePositions[0]);
-    s_setVec3f(shader, "objColor", 1, 0.5, 0.31);
-    s_setVec3f(shader, "lightColor", 1, 1, 1);
     s_setMatrix4fv(shader, "model", 1, GL_FALSE, model[0]);
-    s_setVec3f(shader, "lightPos", lightPos[0], lightPos[1], lightPos[2]);
-    s_setVec3f(shader, "viewPos", cameraPos[0], cameraPos[1], cameraPos[2]);
+    s_setVec3farr(shader, "light.ambient", ambientColor);
+    s_setVec3farr(shader, "light.diffuse", diffuseColor);
+    s_setVec3f(shader, "light.specular", 1, 1, 1);
+    s_setVec3farr(shader, "light.position", lightPos);
+    s_setVec3farr(shader, "viewPos", cameraPos);
+    // set material values
+    s_setVec3f(shader, "material.ambient", 0.0,	0.0,	0.0);
+    s_setVec3f(shader, "material.diffuse", 0.5,	0.0,	0.0);
+    s_setVec3f(shader, "material.specular", 0.7,	0.6, 0.6);
+    s_setFloat(shader, "material.shininess", 0.25 * 128);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-
-
 
     // Dont touch yet
     glfwSwapBuffers(window);

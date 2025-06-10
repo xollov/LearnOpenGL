@@ -89,6 +89,9 @@ void s_setFloat(SHADER this, char* name, float value) {
 void s_setVec3f(SHADER this, char* name, float x, float y, float z) {
   glUniform3f(glGetUniformLocation(this, name), x, y, z);
 }
+void s_setVec3farr(SHADER this, char* name, float *arr) {
+  glUniform3f(glGetUniformLocation(this, name), arr[0], arr[1], arr[2]);
+}
 void s_setVec4f(SHADER this, char* name, float x, float y, float z, float w) {
   glUniform4f(glGetUniformLocation(this, name), x, y, z, w);
 }
