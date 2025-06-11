@@ -1,7 +1,5 @@
 
 #include "Graphics/shader.h"
-#define STB_IMAGE_IMPLEMENTATION
-#include "Graphics/stb_image.h"
 
 #include <stdio.h>
 #include <GLFW/glfw3.h> //-lglfw -lGL are required links
@@ -59,42 +57,88 @@ int main() {
   // VBO & VAO & EBO
   // ---------------------------------------
   float vertices [] = {
-    // pos               //tex         //color
+    // pos            //norm   // tex
     // front
-    -.5f, -.5f, .5f, 0, 0, 1, 
-    -.5f,  .5f, .5f, 0, 0, 1,
-     .5f, -.5f, .5f, 0, 0, 1,
-     .5f,  .5f, .5f, 0, 0, 1,
+    -.5f, -.5f, .5f,   0, 0, 1,  0, 0, 
+    -.5f,  .5f, .5f,   0, 0, 1,  0, 1,
+     .5f, -.5f, .5f,   0, 0, 1,  1, 0,
+     .5f,  .5f, .5f,   0, 0, 1,  1, 1,
 
     // top
-    -.5f, .5f,  .5f, 0, 1, 0,
-    -.5f, .5f, -.5f, 0, 1, 0, 
-     .5f, .5f,  .5f, 0, 1, 0, 
-     .5f, .5f, -.5f, 0, 1, 0, 
+    -.5f, .5f,  .5f,   0, 1, 0,  0, 0,
+    -.5f, .5f, -.5f,   0, 1, 0,  0, 1,
+     .5f, .5f,  .5f,   0, 1, 0,  1, 0,
+     .5f, .5f, -.5f,   0, 1, 0,  1, 1,
 
     // right
-     .5f, -.5f,  .5f, 1, 0, 0,
-     .5f,  .5f,  .5f, 1, 0, 0,
-     .5f, -.5f, -.5f, 1, 0, 0,
-     .5f,  .5f, -.5f, 1, 0, 0,
+     .5f, -.5f,  .5f,  1, 0, 0,  0, 0,
+     .5f,  .5f,  .5f,  1, 0, 0,  0, 1,
+     .5f, -.5f, -.5f,  1, 0, 0,  1, 0,
+     .5f,  .5f, -.5f,  1, 0, 0,  1, 1,
 
     // left
-     -.5f, -.5f,  .5f, -1, 0, 0,
-     -.5f,  .5f,  .5f, -1, 0, 0,
-     -.5f, -.5f, -.5f, -1, 0, 0,
-     -.5f,  .5f, -.5f, -1, 0, 0,
+    -.5f, -.5f,  .5f, -1, 0, 0,  1, 0,
+    -.5f,  .5f,  .5f, -1, 0, 0,  1, 1,
+    -.5f, -.5f, -.5f, -1, 0, 0,  0, 0,
+    -.5f,  .5f, -.5f, -1, 0, 0,  0, 1,
 
     // bottom
-     -.5f, -.5f,  .5f, 0, -1, 0,
-     -.5f, -.5f, -.5f, 0, -1, 0,
-      .5f, -.5f,  .5f, 0, -1, 0,
-      .5f, -.5f, -.5f, 0, -1, 0,
+    -.5f, -.5f,  .5f,  0, -1, 0,  0, 0,
+    -.5f, -.5f, -.5f,  0, -1, 0,  0, 1,
+     .5f, -.5f,  .5f,  0, -1, 0,  1, 0,
+     .5f, -.5f, -.5f,  0, -1, 0,  1, 1,
     // back
-     -.5f, -.5f, -.5f, 0, 0, -1,
-     -.5f,  .5f, -.5f, 0, 0, -1,
-      .5f, -.5f, -.5f, 0, 0, -1,
-      .5f,  .5f, -.5f, 0, 0, -1,
+    -.5f, -.5f, -.5f,  0, 0, -1,  0, 1, 
+    -.5f,  .5f, -.5f,  0, 0, -1,  0, 0,
+     .5f, -.5f, -.5f,  0, 0, -1,  1, 1,
+     .5f,  .5f, -.5f,  0, 0, -1,  1, 0,
   };
+  /*
+  float vertices[] = {
+        // positions          // normals           // texture coords
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  0.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
+
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
+
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+
+         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
+         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+         0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  1.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,
+
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  1.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f
+    };
+  */
   unsigned int indices [] = {
     0,1,3,
     0,2,3,
@@ -129,11 +173,15 @@ int main() {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
   
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), 0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 0);
   glEnableVertexAttribArray(0);
 
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3*sizeof(float)));
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3*sizeof(float)));
   glEnableVertexAttribArray(1);
+
+  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+  glEnableVertexAttribArray(2);
+
   
   // light cube vao
   // NOTE(xollow): for every VAO you use you NEED to bind some VBO and EBO(opt.)
@@ -143,12 +191,19 @@ int main() {
   glBindVertexArray(lightVAO);
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), 0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 0);
   glEnableVertexAttribArray(0);
 
   //SHADERS END
   //=======================================================================
-
+  unsigned int contTexture = loadTexture("container2.png"); 
+  unsigned int specMapText = loadTexture("container2_specular.png");
+  unsigned int emission    = loadTexture("container2_emission.png");
+ 
+  glUseProgram(shader);
+  s_setInt(shader, "material.diffuse", 0);
+  s_setInt(shader, "material.specular", 1);
+  s_setInt(shader, "material.emission", 2);
   // tell opengl for each sampler to which texture unit it belongs to (only has to be done once)
   // -------------------------------------------------------------------------------------------
   // don't forget to activate/use the shader before setting uniforms!
@@ -195,7 +250,7 @@ int main() {
 
     // set light source values
     vec3 lightColor = {1,1,1};
-    vec3 diffuseColor = {1,1,1}, ambientColor = {1,1,1};
+    vec3 diffuseColor = {0.5, 0.5, 0.5}, ambientColor = {0.3, 0.3, 0.3};
     
     // light cube
     glUseProgram(lightShader);
@@ -210,6 +265,7 @@ int main() {
     s_setMatrix4fv(lightShader, "projection", 1, GL_FALSE, projection[0]);
     s_setVec3farr(lightShader,  "lightColor", lightColor);
     glBindVertexArray(lightVAO);
+    //glDrawArrays(GL_TRIANGLES, 0, 36);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
     
     // cube
@@ -217,7 +273,6 @@ int main() {
     s_setMatrix4fv(shader, "view", 1, GL_FALSE, view[0]);
     s_setMatrix4fv(shader, "projection", 1, GL_FALSE, projection[0]);
     glm_mat4_ucopy(GLM_MAT4_IDENTITY, model);  
-    glBindVertexArray(VAO);
     glm_translate(model,cubePositions[0]);
     s_setMatrix4fv(shader, "model", 1, GL_FALSE, model[0]);
     s_setVec3farr(shader, "light.ambient", ambientColor);
@@ -226,12 +281,19 @@ int main() {
     s_setVec3farr(shader, "light.position", lightPos);
     s_setVec3farr(shader, "viewPos", cameraPos);
     // set material values
-    s_setVec3f(shader, "material.ambient", 0.0,	0.0,	0.0);
-    s_setVec3f(shader, "material.diffuse", 0.5,	0.0,	0.0);
-    s_setVec3f(shader, "material.specular", 0.7,	0.6, 0.6);
-    s_setFloat(shader, "material.shininess", 0.25 * 128);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+    s_setFloat(shader, "material.shininess", 32);
 
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, contTexture);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, specMapText);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, emission);
+    glBindVertexArray(VAO);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+    //glDrawArrays(GL_TRIANGLES, 0, 36);
+    
+    glBindVertexArray(0);
     // Dont touch yet
     glfwSwapBuffers(window);
     glfwPollEvents();    

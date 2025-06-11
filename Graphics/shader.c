@@ -2,6 +2,9 @@
 #include<fcntl.h>
 #include<stdlib.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 int readFromFile(FILE* from, char** to){
   if (from == NULL) {
     printf("Source file doesnt exist or couldnt be open\n");  
@@ -79,7 +82,45 @@ void s_set(SHADER* this, char* vertexPath, char* fragPath) {
   glDeleteShader(vertexShader);
   glDeleteShader(fragShader);
 }
+unsigned int loadTexture(const char* path) {
+  
+  unsigned int texture;
+  glGenTextures(1, &texture);
 
+  int width, height, nrchannels;
+  unsigned char *data = stbi_load(path, &width, &height, &nrchannels, 0);
+  if (data)
+  {
+    GLenum format;
+    switch (nrchannels) {
+      case 1:
+        format = GL_RED;
+        break;
+      case 3:
+        format = GL_RGB;
+        break;
+      case 4: 
+        format = GL_RGBA;
+    }
+    glBindTexture(GL_TEXTURE_2D, texture); 
+    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    // set the texture wrapping parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // set texture filtering parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    printf("Text loaded: %s", path);
+  }
+  else
+  {
+    printf("failed to load texture.\n");
+  }
+  stbi_image_free(data);
+  return texture; 
+}
 void s_setInt(SHADER this, char* name, int value) {
  glUniform1i(glGetUniformLocation(this,name), value);
 }
