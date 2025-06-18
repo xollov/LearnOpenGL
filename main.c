@@ -213,9 +213,19 @@ int main() {
 
   vec3 cubePositions[] = {
   {0,  0,  0},
-  {1,  0,  0.5},
+  {2,  5,  -15},
+  {-1, -2.2, -12.4},
+  {-3.8f, -2.0f, -12.3f},  
+  { 2.4f, -0.4f, -3.5f},  
+  {-1.7f,  3.0f, -7.5f},  
+  { 1.3f, -2.0f, -2.5f},  
+  { 1.5f,  2.0f, -2.5f}, 
+  { 1.5f,  0.2f, -1.5f}, 
+  {-1.3f,  1.0f, -1.5}
   };
-
+  vec3 lightPositions[] = {
+    {1,  0,  0.5}, // light cube
+  };
 
   glfwSetKeyCallback(window,keycallback);
   
@@ -250,13 +260,13 @@ int main() {
 
     // set light source values
     vec3 lightColor = {1,1,1};
-    vec3 diffuseColor = {0.5, 0.5, 0.5}, ambientColor = {0.3, 0.3, 0.3};
+    vec3 diffuseColor = {0.5, 0.5, 0.5}, ambientColor = {.2, .2, .2};
     
     // light cube
     glUseProgram(lightShader);
-    glm_translate(model,cubePositions[1]);
+    glm_translate(model,lightPositions[0]);
     vec3 lightPos;
-    glm_vec3_copy(cubePositions[1], lightPos); 
+    glm_vec3_copy(lightPositions[0], lightPos); 
     glm_translate(model, lightPos);
     vec3 scale = {0.3, 0.3, 0.3};
     glm_scale(model, scale); 
@@ -264,35 +274,47 @@ int main() {
     s_setMatrix4fv(lightShader, "view", 1, GL_FALSE, view[0]);
     s_setMatrix4fv(lightShader, "projection", 1, GL_FALSE, projection[0]);
     s_setVec3farr(lightShader,  "lightColor", lightColor);
+    s_setVec3f(lightShader, "spotDir", 1, 0, 0);
     glBindVertexArray(lightVAO);
     //glDrawArrays(GL_TRIANGLES, 0, 36);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
     
-    // cube
-    glUseProgram(shader);
-    s_setMatrix4fv(shader, "view", 1, GL_FALSE, view[0]);
-    s_setMatrix4fv(shader, "projection", 1, GL_FALSE, projection[0]);
-    glm_mat4_ucopy(GLM_MAT4_IDENTITY, model);  
-    glm_translate(model,cubePositions[0]);
-    s_setMatrix4fv(shader, "model", 1, GL_FALSE, model[0]);
-    s_setVec3farr(shader, "light.ambient", ambientColor);
-    s_setVec3farr(shader, "light.diffuse", diffuseColor);
-    s_setVec3f(shader, "light.specular", 1, 1, 1);
-    s_setVec3farr(shader, "light.position", lightPos);
-    s_setVec3farr(shader, "viewPos", cameraPos);
-    // set material values
-    s_setFloat(shader, "material.shininess", 32);
+    for (int i = 0; i < sizeof(cubePositions) / sizeof(vec3); i++) {
+      glUseProgram(shader);
+      s_setMatrix4fv(shader, "view", 1, GL_FALSE, view[0]);
+      s_setMatrix4fv(shader, "projection", 1, GL_FALSE, projection[0]);
+      glm_mat4_ucopy(GLM_MAT4_IDENTITY, model);
+      glm_translate(model, cubePositions[i]);
+      float angle = 20 * i;
+      vec3 axis = {0.3, 0.4, -0.6};
+      vec3 pivot = {0,0,0};
+      glm_rotate_at(model, pivot, glfwGetTime() * glm_rad(angle), axis);
+      //printf("%d.Cube rad: %f, time: %f, rotation: %f\n",i, glm_rad(angle), glfwGetTime(),  glfwGetTime() * glm_rad(angle));
+      s_setMatrix4fv(shader, "model", 1, GL_FALSE, model[0]);
+      s_setVec3farr(shader, "light.position", cameraPos);
+      s_setVec3farr(shader, "light.spotDirection", cameraFront);
+      s_setFloat(shader, "light.cutOff", cos(glm_rad(12.5)));
+      s_setFloat(shader, "light.outerCutOff", cos(glm_rad(17)));
+      s_setVec3farr(shader, "light.ambient", ambientColor);
+      s_setVec3farr(shader, "light.diffuse", diffuseColor);
+      s_setVec3f(shader, "light.specular", 1, 1, 1);
+      s_setFloat(shader, "light.constant", 1); 
+      s_setFloat(shader, "light.linear", 0.14); 
+      s_setFloat(shader, "light.quadratic", 0.07); 
+      s_setVec3farr(shader, "viewPos", cameraPos);
+      // set material values
+      s_setFloat(shader, "material.shininess", 32);
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, contTexture);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, specMapText);
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, emission);
-    glBindVertexArray(VAO);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-    //glDrawArrays(GL_TRIANGLES, 0, 36);
-    
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, contTexture);
+      glActiveTexture(GL_TEXTURE1);
+      glBindTexture(GL_TEXTURE_2D, specMapText);
+      glActiveTexture(GL_TEXTURE2);
+      glBindTexture(GL_TEXTURE_2D, emission);
+      glBindVertexArray(VAO);
+      glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+    }
+
     glBindVertexArray(0);
     // Dont touch yet
     glfwSwapBuffers(window);
