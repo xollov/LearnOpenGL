@@ -1,9 +1,9 @@
 
 CC = gcc
-FLAGS = -Wall -std=c11
+FLAGS =  -Wall -std=c11
 SRCS = main.c glad.c Graphics/shader.c
 LIBS = -lglfw -lGL -lm
-TARGET = w
+TARGET = w.exe
 
 all: $(TARGET)
 
