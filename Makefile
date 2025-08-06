@@ -2,7 +2,7 @@
 CC = gcc
 FLAGS =  -Wall -std=c11
 SRCS = main.c glad.c Graphics/shader.c
-LIBS = -lglfw -lGL -lm
+LIBS = -lglfw -lGL -lm -lassimp
 TARGET = w.exe
 
 all: $(TARGET)

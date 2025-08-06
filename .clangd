@@ -1,0 +1,6 @@
+If:
+  PathMatch: .*\.c
+  PathMatch: .*\.h
+CompileFlags:
+  Add: [-x, c]
+
