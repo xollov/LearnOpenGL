@@ -116,7 +116,7 @@ unsigned int loadTexture(const char* path) {
   }
   else
   {
-    printf("failed to load texture.\n");
+    printf("failed to load texture. %s\n", path);
   }
   stbi_image_free(data);
   return texture; 
@@ -136,6 +136,6 @@ void s_setVec3farr(SHADER this, char* name, float *arr) {
 void s_setVec4f(SHADER this, char* name, float x, float y, float z, float w) {
   glUniform4f(glGetUniformLocation(this, name), x, y, z, w);
 }
-void s_setMatrix4fv(SHADER this, char* name, int count, int bool, float* value) {
-  glUniformMatrix4fv(glGetUniformLocation(this, name), 1, bool, value);
+void s_setMatrix4fv(SHADER this, char* name, int count, int flag, float* value) {
+  glUniformMatrix4fv(glGetUniformLocation(this, name), 1, flag, value);
 }

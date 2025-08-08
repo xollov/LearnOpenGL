@@ -6,14 +6,33 @@
 #include <cglm/cglm.h>
 #include <glad/glad.h>
 
+#include "../Graphics/shader.h"
+
 #ifndef MODEL
 #define MODEL
 
 typedef struct {
+    vec3 position;
+    vec2 texCoords;
+} Vertex;
 
-    vec3* vertices;
+enum TextureType {
+    diffuse,
+    specular
+};
+
+typedef struct {
+    enum TextureType type;
+    unsigned int id;
+    char path[256];
+} Texture;
+
+typedef struct {
+
+    Vertex* vertices;
     unsigned int* indices;
-    int verticesSize, indicesSize;
+    Texture* textures;
+    int verticesSize, indicesSize, texturesSize;
     unsigned int VAO,VBO,EBO;
 } Mesh;
 
@@ -24,7 +43,7 @@ typedef struct {
 } Model;
 
 void loadModel(Model* model, const char* path);
-void drawModel(Model* model);
-void drawMesh(Mesh* mesh);
+void drawModel(Model* model, SHADER shader);
+void drawMesh(Mesh* mesh, SHADER shader);
 
 #endif // MODEL

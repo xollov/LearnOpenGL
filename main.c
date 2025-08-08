@@ -46,8 +46,13 @@ int main() {
         fprintf(stderr,"gladLoadGLLoader() failed.\n");
     }
     glViewport(0,0, 1920, 1080); //glad
+    
+    // configure global opengl state
     glEnable(GL_DEPTH_TEST);
-    //
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glFrontFace(GL_CCW); 
+
     //=======================================================================
     //SHADERS
     SHADER shader, lightShader;
@@ -102,7 +107,7 @@ int main() {
         s_setMatrix4fv(shader, "model", 1, GL_FALSE, model[0]);
         s_setMatrix4fv(shader, "view", 1, GL_FALSE, view[0]);
         s_setMatrix4fv(shader, "projection", 1, GL_FALSE, projection[0]);
-        drawModel(&cubeModel);
+        drawModel(&cubeModel, shader);
 
 
         // Dont touch yet

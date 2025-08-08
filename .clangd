@@ -2,5 +2,5 @@ If:
   PathMatch: .*\.c
   PathMatch: .*\.h
 CompileFlags:
-  Add: [-x, c]
+  Add: [-x, c, -std=c11]
 
