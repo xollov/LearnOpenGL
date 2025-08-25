@@ -23,8 +23,8 @@ void loadMaterialTextures(struct aiMaterial* mat, enum aiTextureType type, Textu
         }
         if (skip == 0) {
             Texture tex;        
-            char path[256] = "Assets/Backpack/";
-            
+            char path[256] = "Assets/sponza/";
+            printf("mat name: %.*s\n", str.length, str.data); 
             tex.id = loadTexture(strcat(path, str.data)); 
             tex.type = type == aiTextureType_DIFFUSE ? diffuse : specular;  
             strcpy(tex.path, str.data);
@@ -160,8 +160,14 @@ void loadModel(Model* model, const char* path) {
     const struct aiScene* scene = aiImportFile(path, 
                                                aiProcess_Triangulate 
                                                | aiProcess_JoinIdenticalVertices
+                                               | aiProcess_GlobalScale
                                                ); 
-    
+    if (NULL == scene) {
+
+        printf("Scene import failed.\n");
+        model->meshesSize = 0;
+        return;
+    }
     model->meshes = malloc(scene->mNumMeshes * sizeof(Mesh));
     printf("Number of meshes: %d\n", scene->mNumMeshes);
     if (NULL == model->meshes) {

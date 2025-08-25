@@ -64,7 +64,8 @@ int main() {
     // MODEL LOADING
      
     Model cubeModel;
-    loadModel(&cubeModel, "Assets/Backpack/backpack.obj"); 
+    loadModel(&cubeModel, "Assets/sponza/source/Sponza.fbx"); 
+    
     //=======================================================================
     // VBO & VAO & EBO
    
@@ -78,7 +79,11 @@ int main() {
     float timer = 0;
     while (!glfwWindowShouldClose(window)) {
 
-        glClearColor(0.1, 0.7, 0.2, 1);
+
+        deltaTime = glfwGetTime() - lastFrame;
+        lastFrame = glfwGetTime();
+
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         procesInput(window);
         // ----------------------------------------------------
@@ -95,15 +100,9 @@ int main() {
         glm_perspective(glm_rad(45), 1, 0.1f, 100.0f, projection);
        
         vec3 pos = {0,0,-3};
-        glm_mat4_scale(model, 0.3); 
+        glm_mat4_scale(model, 100); 
         glm_translate(model, pos);
-        float angle = 20;
-        vec3 axis = {0.3, 0.4, -0.6};
-        vec3 pivot = {0,0,0};
-        glm_rotate_at(model, pivot, glfwGetTime() * glm_rad(angle), axis);
-        
-
-
+               
         s_setMatrix4fv(shader, "model", 1, GL_FALSE, model[0]);
         s_setMatrix4fv(shader, "view", 1, GL_FALSE, view[0]);
         s_setMatrix4fv(shader, "projection", 1, GL_FALSE, projection[0]);
@@ -146,7 +145,6 @@ void procesInput(GLFWwindow* window) {
         glm_vec3_copy(cameraFront, temp);
         glm_vec3_scale(temp, cameraSpeed * deltaTime, temp);
         glm_vec3_add(cameraPos, temp, cameraPos);
-
     }
     if (glfwGetKey(window,  GLFW_KEY_S) == GLFW_PRESS) {
         vec3 temp;
