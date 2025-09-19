@@ -23,9 +23,10 @@ void loadMaterialTextures(struct aiMaterial* mat, enum aiTextureType type, Textu
         }
         if (skip == 0) {
             Texture tex;        
-            char path[256] = "Assets/sponza/";
-            printf("mat name: %.*s\n", str.length, str.data); 
-            tex.id = loadTexture(strcat(path, str.data)); 
+            char buff[256] = "";
+            strcat(buff, assetPath);
+            strcat(buff, str.data);
+            tex.id = loadTexture(buff); 
             tex.type = type == aiTextureType_DIFFUSE ? diffuse : specular;  
             strcpy(tex.path, str.data);
 
@@ -64,8 +65,7 @@ Mesh processMesh(struct aiMesh* mesh, const struct aiScene* scene) {
         result.texturesSize = 0;
         return result;
     }
-
-    if (mesh->mMaterialIndex >= 0) {
+    if (mesh->mMaterialIndex >= 0 && mesh->mMaterialIndex < scene->mNumMaterials) {
         mat = scene->mMaterials[mesh->mMaterialIndex];
         textureCount += aiGetMaterialTextureCount(mat, aiTextureType_DIFFUSE); 
         textureCount += aiGetMaterialTextureCount(mat, aiTextureType_SPECULAR); 
@@ -76,6 +76,7 @@ Mesh processMesh(struct aiMesh* mesh, const struct aiScene* scene) {
     if (textures == NULL) {
         printf("failed to allocatememory for textures\n");
     }
+    
 
     // fill arrays
     for (int i = 0; i < mesh->mNumVertices; i++) {
@@ -154,14 +155,16 @@ void setupMesh(Mesh* mesh) {
 }
 
 // API model.h
-void loadModel(Model* model, const char* path) {
+void loadModel(Model* model, const char* modelPath, const char* absolutePath) {
     
-    printf("Start model loading: %s\n", path);
-    const struct aiScene* scene = aiImportFile(path, 
+    strcpy(assetPath, absolutePath);
+    printf("Start model loading: %s\n", modelPath);
+    const struct aiScene* scene = aiImportFile(modelPath, 
                                                aiProcess_Triangulate 
                                                | aiProcess_JoinIdenticalVertices
                                                | aiProcess_GlobalScale
                                                ); 
+    printf("Number of textures: %d\n", scene->mNumTextures);
     if (NULL == scene) {
 
         printf("Scene import failed.\n");

@@ -49,22 +49,31 @@ int main() {
     
     // configure global opengl state
     glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS); 
+
+    glEnable(GL_STENCIL_TEST);
+    glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW); 
 
+
+
     //=======================================================================
     //SHADERS
-    SHADER shader, lightShader;
+    SHADER shader, shaderSingleColor;
     s_set(&shader, "VertexShader.glsl", "FragShader.glsl");
-    s_set(&lightShader,"VertexShader.glsl","LightFragShader.glsl"); 
+    s_set(&shaderSingleColor, "VertexShader.glsl", "FragShaderSingleColor.glsl");
     
     
     //=======================================================================
     // MODEL LOADING
      
-    Model cubeModel;
-    loadModel(&cubeModel, "Assets/sponza/source/Sponza.fbx"); 
+    Model sponzaModel, backpackModel;
+    loadModel(&backpackModel, "Assets/Backpack/backpack.obj", "Assets/Backpack/"); 
+    loadModel(&sponzaModel, "Assets/sponza/source/Sponza.fbx", "Assets/sponza/"); 
     
     //=======================================================================
     // VBO & VAO & EBO
@@ -84,12 +93,9 @@ int main() {
         lastFrame = glfwGetTime();
 
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         procesInput(window);
         // ----------------------------------------------------
-
-        glUseProgram(shader);
-
         mat4 model = GLM_MAT4_IDENTITY_INIT;
         mat4 view = GLM_MAT4_IDENTITY_INIT;
         mat4 projection = GLM_MAT4_IDENTITY_INIT;
@@ -98,18 +104,43 @@ int main() {
         glm_vec3_add(cameraPos, cameraFront, front);
         glm_lookat(cameraPos, front, cameraUp, view);
         glm_perspective(glm_rad(45), 1, 0.1f, 100.0f, projection);
-       
+
         vec3 pos = {0,0,-3};
-        glm_mat4_scale(model, 100); 
         glm_translate(model, pos);
-               
+
+        glStencilMask(0x00); // not affected by stencil test
+        glUseProgram(shader);
         s_setMatrix4fv(shader, "model", 1, GL_FALSE, model[0]);
         s_setMatrix4fv(shader, "view", 1, GL_FALSE, view[0]);
         s_setMatrix4fv(shader, "projection", 1, GL_FALSE, projection[0]);
-        drawModel(&cubeModel, shader);
+        drawModel(&sponzaModel, shader);
 
-
+        // ----------------------------------------------------
+        // backpack normal
+        glStencilFunc(GL_ALWAYS, 1, 0XFF); // write to stencil mask
+        glStencilMask(0xFF);
+        glm_mat4_identity(model);
+        s_setMatrix4fv(shader, "model", 1, GL_FALSE, model[0]);
+        
+        drawModel(&backpackModel, shader);
+       
+        
+        // backpack outline
+        glStencilFunc(GL_NOTEQUAL, 1, 0XFF); // make an outline by using slightly bigger model
+        glStencilMask(0x00);
+        glDisable(GL_DEPTH_TEST);
+        glUseProgram(shaderSingleColor);
+        float scale = 1.01f;
+        glm_scale_uni(model, scale); 
+        s_setMatrix4fv(shaderSingleColor, "model", 1, GL_FALSE, model[0]);
+        s_setMatrix4fv(shaderSingleColor, "view", 1, GL_FALSE, view[0]);
+        s_setMatrix4fv(shaderSingleColor, "projection", 1, GL_FALSE, projection[0]);
+        drawModel(&backpackModel, shader);
+         
         // Dont touch yet
+        glStencilMask(0xFF);
+        glStencilFunc(GL_ALWAYS, 0, 0xFF);
+        glEnable(GL_DEPTH_TEST);
         glBindVertexArray(0);
         glfwSwapBuffers(window);
         glfwPollEvents();    

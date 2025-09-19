@@ -42,7 +42,7 @@ typedef struct {
     int meshesSize;
 } Model;
 
-void loadModel(Model* model, const char* path);
+void loadModel(Model* model, const char* modelPath, const char* absolutePath);
 void drawModel(Model* model, SHADER shader);
 void drawMesh(Mesh* mesh, SHADER shader);
 
