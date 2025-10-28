@@ -201,8 +201,14 @@ void drawModel(Model* model, SHADER shader) {
 void drawMesh(Mesh* mesh, SHADER shader) {
     
     // textures
+    static int previousCount = 0;
+    for (int i = 0; i < previousCount; i++) {
+        glActiveTexture(GL_TEXTURE0 + i);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
     unsigned int textureNr[2] = {1,1};
 
+    previousCount = mesh->texturesSize;
     for (int i = 0; i < mesh->texturesSize; i++) {
 
         glActiveTexture(GL_TEXTURE0 + i);
@@ -219,8 +225,25 @@ void drawMesh(Mesh* mesh, SHADER shader) {
     }
     glActiveTexture(GL_TEXTURE0);
 
+    if (mesh->texturesSize <= 0) {
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
     glBindVertexArray(mesh->VAO);
     glDrawElements(GL_TRIANGLES, mesh->indicesSize, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
+}
+void deleteModel(Model* model) {
+
+    for (int i = 0; i < model->meshesSize; i++) {
+        Mesh mesh = model->meshes[i];
+        free(mesh.vertices);
+        free(mesh.indices);
+        free(mesh.textures);
+        glDeleteVertexArrays(1, &(mesh.VAO));
+        glDeleteBuffers(1, &mesh.VBO);
+        glDeleteBuffers(1, &mesh.EBO);
+    }
+    free(model->meshes);
 }
 // API model.h end

@@ -5,6 +5,7 @@
 
 #include <cglm/cglm.h>
 #include "common/model.h"
+#include "common/objects.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void keycallback(GLFWwindow* window, int key, int scancode, int action, int mods);
@@ -22,6 +23,9 @@ float lastFrame   = 0;
 vec2 mouseLast    = {0, 0};    // last pos of mouse
 float yaw = -90, pitch = 0;    // NOTE(xollow): learn what it is again
 
+int SCR_WIDTH = 800;
+int SCR_HEIGHT = 600;
+
 int main() {
     //glfw config
     if(!glfwInit()) {
@@ -30,8 +34,9 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_RESIZABLE, 0);
 
-    GLFWwindow* window = glfwCreateWindow(1920, 1080,"LearnOpenGL", NULL, NULL); 
+    GLFWwindow* window = glfwCreateWindow(800, 600,"LearnOpenGL", NULL, NULL); 
     if (window == NULL) {
         fprintf(stderr, "glfwCreateWindow() failed.\n");
         glfwTerminate();
@@ -45,39 +50,86 @@ int main() {
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         fprintf(stderr,"gladLoadGLLoader() failed.\n");
     }
-    glViewport(0,0, 1920, 1080); //glad
+    glViewport(0,0, SCR_WIDTH, SCR_HEIGHT); //glad
     
     // configure global opengl state
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS); 
 
-    glEnable(GL_STENCIL_TEST);
-    glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-    glFrontFace(GL_CCW); 
-
-
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     //=======================================================================
     //SHADERS
-    SHADER shader, shaderSingleColor;
+    SHADER shader, shaderSingleColor, shaderFramebuffer;
     s_set(&shader, "VertexShader.glsl", "FragShader.glsl");
     s_set(&shaderSingleColor, "VertexShader.glsl", "FragShaderSingleColor.glsl");
-    
-    
+    s_set(&shaderFramebuffer, "VertexFramebuffer.glsl", "FragFramebuffer.glsl"); 
+     
     //=======================================================================
     // MODEL LOADING
      
-    Model sponzaModel, backpackModel;
+    Model cubeModel, backpackModel;
     loadModel(&backpackModel, "Assets/Backpack/backpack.obj", "Assets/Backpack/"); 
-    loadModel(&sponzaModel, "Assets/sponza/source/Sponza.fbx", "Assets/sponza/"); 
-    
+    loadModel(&cubeModel, "Assets/cube.obj", "Assets/"); 
+/* 
+    float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
+        // positions   // texCoords
+        -1.0f,  1.0f,  0.0f, 1.0f,
+        -1.0f, -1.0f,  0.0f, 0.0f,
+         1.0f, -1.0f,  1.0f, 0.0f,
+
+        -1.0f,  1.0f,  0.0f, 1.0f,
+         1.0f, -1.0f,  1.0f, 0.0f,
+         1.0f,  1.0f,  1.0f, 1.0f
+    };
+    // screen quad VAO
+    unsigned int quadVAO, quadVBO;
+    glGenVertexArrays(1, &quadVAO);
+    glGenBuffers(1, &quadVBO);
+    glBindVertexArray(quadVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+ */
+
+    objectsInit();
     //=======================================================================
-    // VBO & VAO & EBO
-   
+    // VBO & VAO & EBO & RBO
+    
+    unsigned int framebuffer;
+    glGenFramebuffers(1, &framebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer); 
+
+    unsigned int textureColorbuffer;
+    glGenTextures(1, &textureColorbuffer);
+    glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0); 
+   // glBindTexture(GL_TEXTURE_2D, 0);
+
+    unsigned int  rbo;
+    glGenRenderbuffers(1, &rbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+    //glBindRenderbuff(GL_RENDERBUFFER, 0);
+
+    
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        printf("ERROR: FRAMEBUFFER WASNT COMPLETED\n");
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+
+    unsigned int transparentTexture = loadTexture("Assets/images/blending_window.png");
+    unsigned int woodenFloorTexture = loadTexture("Assets/images/container.jpg");
     //=======================================================================
     //
     glfwSetKeyCallback(window, keycallback);
@@ -85,16 +137,26 @@ int main() {
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetCursorPosCallback(window, mousecallback);
 
+    vec3 positions[] =
+        {
+            {-1, 1, -5},
+            {2, 3, -4},
+            {0,0,-3},
+            {4, -2, 0},
+        };
     float timer = 0;
     while (!glfwWindowShouldClose(window)) {
 
-
         deltaTime = glfwGetTime() - lastFrame;
         lastFrame = glfwGetTime();
-
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         procesInput(window);
+        
+        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+        glEnable(GL_DEPTH_TEST);
+
+        glClearColor(0.1f, 0.5f, 0.6f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
         // ----------------------------------------------------
         mat4 model = GLM_MAT4_IDENTITY_INIT;
         mat4 view = GLM_MAT4_IDENTITY_INIT;
@@ -105,47 +167,50 @@ int main() {
         glm_lookat(cameraPos, front, cameraUp, view);
         glm_perspective(glm_rad(45), 1, 0.1f, 100.0f, projection);
 
-        vec3 pos = {0,0,-3};
-        glm_translate(model, pos);
+        vec3 color = {0,1,1};
 
-        glStencilMask(0x00); // not affected by stencil test
         glUseProgram(shader);
-        s_setMatrix4fv(shader, "model", 1, GL_FALSE, model[0]);
-        s_setMatrix4fv(shader, "view", 1, GL_FALSE, view[0]);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, transparentTexture);
+        
         s_setMatrix4fv(shader, "projection", 1, GL_FALSE, projection[0]);
-        drawModel(&sponzaModel, shader);
+        s_setMatrix4fv(shader, "view", 1, GL_FALSE, view[0]);
+        for (int i = 0; i < sizeof(positions)/sizeof(vec3); ++i) {
 
-        // ----------------------------------------------------
-        // backpack normal
-        glStencilFunc(GL_ALWAYS, 1, 0XFF); // write to stencil mask
-        glStencilMask(0xFF);
+            glm_mat4_identity(model);
+            glm_translate(model, positions[i]);
+            s_setMatrix4fv(shader, "model", 1, GL_FALSE, model[0]);
+            glBindVertexArray(quadVAO);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
+
         glm_mat4_identity(model);
         s_setMatrix4fv(shader, "model", 1, GL_FALSE, model[0]);
-        
-        drawModel(&backpackModel, shader);
-       
-        
-        // backpack outline
-        glStencilFunc(GL_NOTEQUAL, 1, 0XFF); // make an outline by using slightly bigger model
-        glStencilMask(0x00);
-        glDisable(GL_DEPTH_TEST);
-        glUseProgram(shaderSingleColor);
-        float scale = 1.01f;
-        glm_scale_uni(model, scale); 
-        s_setMatrix4fv(shaderSingleColor, "model", 1, GL_FALSE, model[0]);
-        s_setMatrix4fv(shaderSingleColor, "view", 1, GL_FALSE, view[0]);
-        s_setMatrix4fv(shaderSingleColor, "projection", 1, GL_FALSE, projection[0]);
-        drawModel(&backpackModel, shader);
-         
-        // Dont touch yet
-        glStencilMask(0xFF);
-        glStencilFunc(GL_ALWAYS, 0, 0xFF);
-        glEnable(GL_DEPTH_TEST);
+        drawModel(&backpackModel, shader);        
         glBindVertexArray(0);
+        //drawModel(&cubeModel, shader);
+        // ----------------------------------------------------
+      
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glDisable(GL_DEPTH_TEST);
+
+        glClearColor(.4, .4, .3, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        glUseProgram(shaderFramebuffer);
+        glBindVertexArray(quadVAO);
+        glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+       
+        // Dont touch yet
         glfwSwapBuffers(window);
         glfwPollEvents();    
     }
 
+    deleteModel(&cubeModel);
+    glDeleteProgram(shader);
+    glDeleteProgram(shaderSingleColor);
+    glDeleteProgram(shaderFramebuffer);
     glfwTerminate();
     return 0;
 }

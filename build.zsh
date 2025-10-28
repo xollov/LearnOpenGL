@@ -8,7 +8,7 @@ FLAGS=(-Wall -std=c11)
 LIBS=(-lglfw -lGL -lm -lassimp)
 
 # Source files
-SRCS=(main.c glad.c Graphics/shader.c common/model.c)
+SRCS=(main.c glad.c Graphics/shader.c common/model.c common/objects.c)
 
 # Output binary
 TARGET="w.exe"
