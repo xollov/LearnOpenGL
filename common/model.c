@@ -92,6 +92,18 @@ Mesh processMesh(struct aiMesh* mesh, const struct aiScene* scene) {
          vertices[i].texCoords[0] = 0;
          vertices[i].texCoords[1] = 0;
         }
+        if (mesh->mNormals) {
+
+            vertices[i].normals[0] = mesh->mNormals[i].x;
+            vertices[i].normals[1] = mesh->mNormals[i].y;
+            vertices[i].normals[2] = mesh->mNormals[i].z;
+        }
+        else {
+
+            vertices[i].normals[0] = 0;
+            vertices[i].normals[1] = 0;
+            vertices[i].normals[2] = 0;
+        }
 
     }
     int offset = 0;
@@ -149,7 +161,10 @@ void setupMesh(Mesh* mesh) {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
 
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) (sizeof(float) * 3));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) (sizeof(float) * 3));
+
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) (sizeof(float) * 6));
 
     glBindVertexArray(0);
 }

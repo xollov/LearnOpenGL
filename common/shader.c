@@ -18,7 +18,7 @@ int readFromFile(FILE* from, char** to){
   (*to)[size] = '\0';
   return 0;
 }
-void s_set(SHADER* this, char* vertexPath, char* fragPath) {  
+void s_set(SHADER* shader, char* vertexPath, char* fragPath) {  
   FILE *vertexFile, *fragFile;
   char* vertexSource;
   char* fragSource;
@@ -65,14 +65,14 @@ void s_set(SHADER* this, char* vertexPath, char* fragPath) {
       printf("Fragment shader fragment compilation failed.\n%s\n", infolog);
   }
   //linking to shader program
-  *this = glCreateProgram();
-  glAttachShader(*this, vertexShader);
-  glAttachShader(*this, fragShader);
-  glLinkProgram (*this);
+  *shader = glCreateProgram();
+  glAttachShader(*shader, vertexShader);
+  glAttachShader(*shader, fragShader);
+  glLinkProgram (*shader);
   
-  glGetProgramiv(*this, GL_LINK_STATUS, &success);
+  glGetProgramiv(*shader, GL_LINK_STATUS, &success);
   if (!success) {
-    glGetProgramInfoLog(*this, 512, NULL, infolog);
+    glGetProgramInfoLog(*shader, 512, NULL, infolog);
     printf("Shader link failed.\n%s\n",infolog);
   }
   
@@ -121,21 +121,55 @@ unsigned int loadTexture(const char* path) {
   stbi_image_free(data);
   return texture; 
 }
-void s_setInt(SHADER this, char* name, int value) {
- glUniform1i(glGetUniformLocation(this,name), value);
+
+unsigned int loadCubemap(const char* path) {
+
+    static char sides[6][10] = {"right", "left", "top", "bottom", "front", "back"};
+    unsigned int cubemap;
+    glGenTextures(1, &cubemap);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap);
+    
+    int width, height, nrchannels;
+    unsigned char *data;
+    char buffer[256];
+    for (int i = 0; i < 6; i++) {
+        strcpy(buffer, (char*)path); 
+        strcat(buffer, sides[i]); 
+        strcat(buffer, ".jpg"); 
+
+        data = stbi_load(buffer, &width, &height, &nrchannels, 0);
+        if (data) {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 
+                         0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+            stbi_image_free(data);
+        }
+        else {
+            printf("Failed to load cube map texture!!! %s.", buffer);
+        }
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);  
+
+    return cubemap;
 }
-void s_setFloat(SHADER this, char* name, float value) {
-  glUniform1f(glGetUniformLocation(this, name), value);
+void s_setInt(SHADER shader, char* name, int value) {
+ glUniform1i(glGetUniformLocation(shader,name), value);
 }
-void s_setVec3f(SHADER this, char* name, float x, float y, float z) {
-  glUniform3f(glGetUniformLocation(this, name), x, y, z);
+void s_setFloat(SHADER shader, char* name, float value) {
+  glUniform1f(glGetUniformLocation(shader, name), value);
 }
-void s_setVec3farr(SHADER this, char* name, float *arr) {
-  glUniform3f(glGetUniformLocation(this, name), arr[0], arr[1], arr[2]);
+void s_setVec3f(SHADER shader, char* name, float x, float y, float z) {
+  glUniform3f(glGetUniformLocation(shader, name), x, y, z);
 }
-void s_setVec4f(SHADER this, char* name, float x, float y, float z, float w) {
-  glUniform4f(glGetUniformLocation(this, name), x, y, z, w);
+void s_setVec3farr(SHADER shader, char* name, float *arr) {
+  glUniform3f(glGetUniformLocation(shader, name), arr[0], arr[1], arr[2]);
 }
-void s_setMatrix4fv(SHADER this, char* name, int count, int flag, float* value) {
-  glUniformMatrix4fv(glGetUniformLocation(this, name), 1, flag, value);
+void s_setVec4f(SHADER shader, char* name, float x, float y, float z, float w) {
+  glUniform4f(glGetUniformLocation(shader, name), x, y, z, w);
+}
+void s_setMatrix4fv(SHADER shader, char* name, int count, int flag, float* value) {
+  glUniformMatrix4fv(glGetUniformLocation(shader, name), 1, flag, value);
 }

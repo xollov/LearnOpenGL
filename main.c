@@ -1,5 +1,5 @@
-#include "Graphics/shader.h"
 
+#include "common/shader.h"
 #include <stdio.h>
 #include <GLFW/glfw3.h> //-lglfw -lGL are required links
 
@@ -23,9 +23,11 @@ float lastFrame   = 0;
 vec2 mouseLast    = {0, 0};    // last pos of mouse
 float yaw = -90, pitch = 0;    // NOTE(xollow): learn what it is again
 
-int SCR_WIDTH = 800;
-int SCR_HEIGHT = 600;
+int SCR_WIDTH = 1920;
+int SCR_HEIGHT = 1080;
 
+
+// Note(): setting glfw_resizable to false or floating to true makes  widnow shrink into a line
 int main() {
     //glfw config
     if(!glfwInit()) {
@@ -34,7 +36,8 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_RESIZABLE, 0);
+    //glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    //glfwWindowHint(GLFW_FLOATING, GL_TRUE);
 
     GLFWwindow* window = glfwCreateWindow(800, 600,"LearnOpenGL", NULL, NULL); 
     if (window == NULL) {
@@ -61,75 +64,19 @@ int main() {
 
     //=======================================================================
     //SHADERS
-    SHADER shader, shaderSingleColor, shaderFramebuffer;
-    s_set(&shader, "VertexShader.glsl", "FragShader.glsl");
-    s_set(&shaderSingleColor, "VertexShader.glsl", "FragShaderSingleColor.glsl");
-    s_set(&shaderFramebuffer, "VertexFramebuffer.glsl", "FragFramebuffer.glsl"); 
+    SHADER shader, shaderSkybox;
+    s_set(&shader, "Shaders/VertexReflection.glsl", "Shaders/FragReflection.glsl");
+    s_set(&shaderSkybox, "Shaders/VertexSkybox.glsl", "Shaders/FragSkybox.glsl"); 
      
     //=======================================================================
     // MODEL LOADING
      
-    Model cubeModel, backpackModel;
+    Model backpackModel;
     loadModel(&backpackModel, "Assets/Backpack/backpack.obj", "Assets/Backpack/"); 
-    loadModel(&cubeModel, "Assets/cube.obj", "Assets/"); 
-/* 
-    float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
-        // positions   // texCoords
-        -1.0f,  1.0f,  0.0f, 1.0f,
-        -1.0f, -1.0f,  0.0f, 0.0f,
-         1.0f, -1.0f,  1.0f, 0.0f,
-
-        -1.0f,  1.0f,  0.0f, 1.0f,
-         1.0f, -1.0f,  1.0f, 0.0f,
-         1.0f,  1.0f,  1.0f, 1.0f
-    };
-    // screen quad VAO
-    unsigned int quadVAO, quadVBO;
-    glGenVertexArrays(1, &quadVAO);
-    glGenBuffers(1, &quadVBO);
-    glBindVertexArray(quadVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
- */
 
     objectsInit();
-    //=======================================================================
-    // VBO & VAO & EBO & RBO
-    
-    unsigned int framebuffer;
-    glGenFramebuffers(1, &framebuffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer); 
+    unsigned int skybox = loadCubemap("Assets/skybox/skybox_");
 
-    unsigned int textureColorbuffer;
-    glGenTextures(1, &textureColorbuffer);
-    glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0); 
-   // glBindTexture(GL_TEXTURE_2D, 0);
-
-    unsigned int  rbo;
-    glGenRenderbuffers(1, &rbo);
-    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
-    //glBindRenderbuff(GL_RENDERBUFFER, 0);
-
-    
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-        printf("ERROR: FRAMEBUFFER WASNT COMPLETED\n");
-    }
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-
-
-    unsigned int transparentTexture = loadTexture("Assets/images/blending_window.png");
-    unsigned int woodenFloorTexture = loadTexture("Assets/images/container.jpg");
     //=======================================================================
     //
     glfwSetKeyCallback(window, keycallback);
@@ -137,21 +84,13 @@ int main() {
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
     glfwSetCursorPosCallback(window, mousecallback);
 
-    vec3 positions[] =
-        {
-            {-1, 1, -5},
-            {2, 3, -4},
-            {0,0,-3},
-            {4, -2, 0},
-        };
-    float timer = 0;
+   // float timer = 0;
     while (!glfwWindowShouldClose(window)) {
 
         deltaTime = glfwGetTime() - lastFrame;
         lastFrame = glfwGetTime();
         procesInput(window);
         
-        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
         glEnable(GL_DEPTH_TEST);
 
         glClearColor(0.1f, 0.5f, 0.6f, 1.0f);
@@ -167,50 +106,66 @@ int main() {
         glm_lookat(cameraPos, front, cameraUp, view);
         glm_perspective(glm_rad(45), 1, 0.1f, 100.0f, projection);
 
-        vec3 color = {0,1,1};
 
-        glUseProgram(shader);
+        mat4 skyboxView;
+        glm_mat4_copy(view, skyboxView);
+        for (int i = 0; i < 3; i++) {
+            skyboxView[i][3] = 0;
+        }
+         for (int j = 0; j < 3; j++) {
+            skyboxView[3][j] = 0;
+        }
+        glDepthMask(GL_FALSE);
+        glUseProgram(shaderSkybox);
+        s_setMatrix4fv(shaderSkybox, "projection", 1, GL_FALSE, projection[0]);
+        s_setMatrix4fv(shaderSkybox, "view", 1, GL_FALSE, skyboxView[0]);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, transparentTexture);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, skybox);
+        glBindVertexArray(skyboxVAO); 
+        glDrawArrays(GL_TRIANGLES, 0, 36);
         
+        glDepthMask(GL_TRUE);
+        glUseProgram(shader);
         s_setMatrix4fv(shader, "projection", 1, GL_FALSE, projection[0]);
         s_setMatrix4fv(shader, "view", 1, GL_FALSE, view[0]);
-        for (int i = 0; i < sizeof(positions)/sizeof(vec3); ++i) {
 
-            glm_mat4_identity(model);
-            glm_translate(model, positions[i]);
-            s_setMatrix4fv(shader, "model", 1, GL_FALSE, model[0]);
-            glBindVertexArray(quadVAO);
-            glDrawArrays(GL_TRIANGLES, 0, 6);
-        }
+        // cube
+        glm_mat4_identity(model);
+        //vec3 axis = {0,1,0};
+        //glm_rotate(model, glfwGetTime() * 0.5f, axis);
+        s_setMatrix4fv(shader, "model", 1, GL_FALSE, model[0]);
+        s_setVec3farr(shader, "cameraPos", cameraPos);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, skybox);
+        glBindVertexArray(cubeVAO);
+        glDrawArrays(GL_TRIANGLES, 0,36);
+        
+        // backpack
+        glUseProgram(shader);
+        s_setMatrix4fv(shader, "projection", 1, GL_FALSE, projection[0]);
+        s_setMatrix4fv(shader, "view", 1, GL_FALSE, view[0]);
 
         glm_mat4_identity(model);
+        vec3 pos = {10,0,0};
+        glm_translate(model,pos); 
+        vec3 axis = {0,1,0};
+        glm_rotate(model, glfwGetTime() * 0.5f, axis);
         s_setMatrix4fv(shader, "model", 1, GL_FALSE, model[0]);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, skybox);
+        s_setVec3farr(shader, "cameraPos", cameraPos);
         drawModel(&backpackModel, shader);        
+        
         glBindVertexArray(0);
-        //drawModel(&cubeModel, shader);
-        // ----------------------------------------------------
-      
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glDisable(GL_DEPTH_TEST);
 
-        glClearColor(.4, .4, .3, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        glUseProgram(shaderFramebuffer);
-        glBindVertexArray(quadVAO);
-        glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-       
         // Dont touch yet
         glfwSwapBuffers(window);
         glfwPollEvents();    
     }
 
-    deleteModel(&cubeModel);
+    deleteModel(&backpackModel);
     glDeleteProgram(shader);
-    glDeleteProgram(shaderSingleColor);
-    glDeleteProgram(shaderFramebuffer);
+    glDeleteProgram(shaderSkybox);
     glfwTerminate();
     return 0;
 }
@@ -313,5 +268,7 @@ void mousecallback(GLFWwindow* window, double xpos, double ypos) {
 }
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
+    static int i = 0;
     glViewport(0, 0, width, height);
+    printf("%d.Changing size\n", i++);
 }

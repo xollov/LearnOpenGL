@@ -6,13 +6,14 @@
 #include <cglm/cglm.h>
 #include <glad/glad.h>
 
-#include "../Graphics/shader.h"
+#include "shader.h"
 
 #ifndef MODEL
 #define MODEL
 
 typedef struct {
     vec3 position;
+    vec3 normals;
     vec2 texCoords;
 } Vertex;
 
